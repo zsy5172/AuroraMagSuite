@@ -1,0 +1,22 @@
+nohup: ignoring input
+🚀 AuroraMag Detail Proxy running on http://localhost:3337
+📡 Upstream: http://localhost:3333
+🌐 Public URL: http://117.72.71.38:9696
+
+📋 Configure in Prowlarr:
+   URL: http://localhost:3337/torznab/
+   API Key: (leave empty)
+
+⚙️  Environment variables:
+   PUBLIC_HOST=117.72.71.38:9696
+   PUBLIC_PROTOCOL=http
+❌ Details cache MISS: 6669c124...
+🔍 关键词提取: 2003, The Matrix Revolutions, Matrix, Revolutions
+🔍 提取关键词: 2003, The Matrix Revolutions, Matrix, Revolutions
+🔍 智能搜索: [2003, The Matrix Revolutions, Matrix, Revolutions]
+🔍 找到 16 个相关内容
+✅ 找到 12 个相关推荐
+🔍 豆瓣搜索词: "Matrix" (年份: 2003)
+✅ 豆瓣: 黑客帝国 - 9.1/10
+✅ 豆瓣数据已添加: 黑客帝国 9.1
+✅ Details cache HIT: 6669c124...

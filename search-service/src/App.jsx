@@ -1,0 +1,75 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { searchTorrents, getTMDBPoster, getCacheStats } from './api';
+import TorrentCard from './components/TorrentCard';
+import SearchBar from './components/SearchBar';
+import CacheStats from './components/CacheStats';
+
+function App() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['torrents', activeSearch],
+    queryFn: () => searchTorrents(activeSearch, 50),
+    enabled: activeSearch.length > 0,
+  });
+
+  const handleSearch = (query) => {
+    setActiveSearch(query);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="container mx-auto px-4 py-8">
+        <header className="mb-8">
+          <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-2">
+            🧲 AuroraMag
+          </h1>
+          <p className="text-slate-400">Bitmagnet GraphQL 驱动的 AuroraMag Search UI · 内建图片缓存与多元数据源</p>
+        </header>
+
+        <SearchBar onSearch={handleSearch} />
+        
+        <CacheStats />
+
+        <div className="mt-8">
+          {isLoading && (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-900/20 border border-red-500 text-red-200 px-6 py-4 rounded-lg">
+              错误: {error.message}
+            </div>
+          )}
+
+          {data && (
+            <>
+              <div className="mb-6 text-slate-300">
+                找到 <span className="text-purple-400 font-bold">{data.torrents.totalCount}</span> 个结果
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {data.torrents.edges.map(({ node }) => (
+                  <TorrentCard key={node.infoHash} torrent={node} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {!activeSearch && !isLoading && (
+            <div className="text-center py-20 text-slate-400">
+              <div className="text-6xl mb-4">🔍</div>
+              <p className="text-xl">输入关键词开始搜索</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;

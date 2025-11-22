@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuroraMag Detail Proxy - 功能演示</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 1rem;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 3rem;
+      opacity: 0.9;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    .feature-card {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 2rem;
+      border-radius: 1rem;
+      transition: transform 0.3s;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+    }
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    .feature-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .feature-desc {
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+    .demo-link {
+      display: inline-block;
+      padding: 1rem 2rem;
+      background: white;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      margin: 0.5rem;
+      transition: transform 0.2s;
+    }
+    .demo-link:hover {
+      transform: scale(1.05);
+    }
+    .demo-section {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 1rem;
+      margin-bottom: 2rem;
+    }
+    .code-block {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      font-family: 'Courier New', monospace;
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background: #10b981;
+      border-radius: 1rem;
+      font-size: 0.875rem;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 AuroraMag Detail Proxy</h1>
+    <div class="subtitle">v1.2.0 - 功能演示</div>
+
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">📁</div>
+        <div class="feature-title">文件类型图标 <span class="status-badge">✓ 完成</span></div>
+        <div class="feature-desc">
+          每个文件都有对应的emoji图标：<br>
+          🎬 视频 | 🎵 音频 | 💬 字幕<br>
+          🖼️ 图片 | 📄 文档 | 📦 压缩包
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">文件统计分布 <span class="status-badge">✓ 完成</span></div>
+        <div class="feature-desc">
+          卡片式展示各类型文件的数量和大小占比，一眼看出种子组成。
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🖼️</div>
+        <div class="feature-title">TMDB 画廊 <span class="status-badge">✓ 完成</span></div>
+        <div class="feature-desc">
+          显示最多12张剧照/海报，支持点击放大查看，ESC键关闭。
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🎭</div>
+        <div class="feature-title">演员列表 <span class="status-badge">✓ 完成</span></div>
+        <div class="feature-desc">
+          显示主要演员头像、姓名和角色，最多12位演员。
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📂</div>
+        <div class="feature-title">完整文件列表 <span class="status-badge">✓ 已有</span></div>
+        <div class="feature-desc">
+          显示种子包含的所有文件路径和大小，支持滚动查看。
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🎬</div>
+        <div class="feature-title">TMDB 元数据 <span class="status-badge">✓ 已有</span></div>
+        <div class="feature-desc">
+          自动获取电影海报、评分、简介等丰富信息。
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <h2 style="margin-bottom: 1rem;">🎯 在线演示</h2>
+      <p style="margin-bottom: 1rem;">点击下方链接查看实际效果（需要有文件信息的种子）：</p>
+      <a href="http://117.72.71.38:9696/details/f500a132d1fb96bbc2671d18fca68cdef10b89a3" class="demo-link" target="_blank">
+        演示：300勇士：帝国崛起
+      </a>
+      <a href="http://117.72.71.38:9696/details/3defe3f6b2b5ebcefc810eb60551e9623e52d02d" class="demo-link" target="_blank">
+        演示：Rugby比赛
+      </a>
+    </div>
+
+    <div class="demo-section">
+      <h2 style="margin-bottom: 1rem;">🔧 API 测试</h2>
+      <p style="margin-bottom: 1rem;">使用 curl 测试 API：</p>
+      <div class="code-block">
+# 获取种子详情<br>
+curl http://117.72.71.38:9696/api/details/f500a132d1fb96bbc2671d18fca68cdef10b89a3 | python3 -m json.tool<br>
+<br>
+# 检查文件统计<br>
+curl -s http://localhost:3337/api/details/{hash} | python3 -c "import sys,json; print(json.dumps(json.load(sys.stdin).get('fileStats'), indent=2))"
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <h2 style="margin-bottom: 1rem;">📖 文档</h2>
+      <p style="margin-bottom: 1rem;">详细文档：</p>
+      <a href="https://github.com/..." class="demo-link">README</a>
+      <a href="file:///home/followcat/auroramag-detail-proxy/FILE_LIST_FEATURE.md" class="demo-link">文件列表功能</a>
+      <a href="file:///home/followcat/auroramag-detail-proxy/PREVIEW_FEATURES.md" class="demo-link">预览功能详解</a>
+    </div>
+
+    <div class="demo-section">
+      <h2 style="margin-bottom: 1rem;">⚙️ 技术栈</h2>
+      <ul style="line-height: 2;">
+        <li>🟢 Node.js + Express</li>
+        <li>🔵 TMDB API</li>
+        <li>🟣 Bitmagnet GraphQL</li>
+        <li>🟡 原生 JavaScript</li>
+        <li>🔴 纯 CSS 样式</li>
+      </ul>
+    </div>
+
+    <div class="demo-section" style="text-align: center;">
+      <h2 style="margin-bottom: 1rem;">🎉 版本信息</h2>
+      <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">v1.2.0</p>
+      <p style="opacity: 0.8;">2025-11-13 发布</p>
+      <p style="margin-top: 2rem; opacity: 0.7;">
+        新增 4 大预览功能，提升用户体验！
+      </p>
+    </div>
+  </div>
+</body>
+</html>
