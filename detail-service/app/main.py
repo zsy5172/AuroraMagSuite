@@ -71,3 +71,12 @@ async def cache_stats():
 async def cache_clear():
     bitmagnet.clear_cache()
     return {"status": "cleared"}
+
+
+@app.post("/graphql")
+async def graphql_proxy(body: dict):
+    try:
+        data = await bitmagnet.proxy_graphql(body)
+        return data
+    except HTTPStatusError as exc:
+        raise HTTPException(status_code=exc.response.status_code, detail="Bitmagnet GraphQL error") from exc

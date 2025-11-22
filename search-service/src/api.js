@@ -1,38 +1,38 @@
 import { GraphQLClient } from 'graphql-request';
 
-const GRAPHQL_PATH = import.meta.env.VITE_GRAPHQL_PATH || '/graphql';
+const GRAPHQL_PATH = '/graphql';
 const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE || '/media';
-
-export const graphqlClient = new GraphQLClient(GRAPHQL_PATH);
 
 export const searchTorrents = async (query, limit = 20) => {
   const gql = `
     query SearchTorrents($query: String!, $limit: Int!) {
-      torrents(
-        query: { queryString: $query }
-        limit: $limit
-      ) {
-        totalCount
-        edges {
-          node {
-            infoHash
-            name
-            size
-            filesCount
-            seeders
-            leechers
-            publishedAt
-            content {
-              type
-              title
-              releaseYear
-              collections {
-                name
+      torrent {
+        torrents(
+          query: { queryString: $query }
+          limit: $limit
+        ) {
+          totalCount
+          edges {
+            node {
+              infoHash
+              name
+              size
+              filesCount
+              seeders
+              leechers
+              publishedAt
+              content {
                 type
-              }
-              attributes {
-                key
-                value
+                title
+                releaseYear
+                collections {
+                  name
+                  type
+                }
+                attributes {
+                  key
+                  value
+                }
               }
             }
           }
@@ -41,7 +41,8 @@ export const searchTorrents = async (query, limit = 20) => {
     }
   `;
   
-  return graphqlClient.request(gql, { query, limit });
+  const result = await graphqlClient.request(gql, { query, limit });
+  return result?.torrent?.torrents;
 };
 
 export const getImageProxy = (url, width = 300) => {

@@ -5,7 +5,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const backend = env.VITE_BACKEND_URL || 'http://localhost:3337';
   const media = env.VITE_MEDIA_PROXY_URL || 'http://localhost:3335';
-  const graphql = env.VITE_GRAPHQL_URL || 'http://localhost:3333';
+  const graphql = env.VITE_BACKEND_URL || 'http://localhost:3337';
 
   return {
     plugins: [react()],

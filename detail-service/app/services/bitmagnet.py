@@ -58,6 +58,14 @@ async def graphql_cached(query: str, variables: dict | None = None) -> dict:
     return data
 
 
+async def proxy_graphql(payload: dict) -> dict:
+    """
+    Transparent GraphQL passthrough to Bitmagnet without caching.
+    """
+    resp = await _http_post(f"{_bitmagnet_base()}/graphql", payload)
+    return resp.json()
+
+
 async def fetch_tmdb_movie(tmdb_id: str, language: str = "zh-CN") -> Optional[dict]:
     if not settings.tmdb_api_key:
         return None

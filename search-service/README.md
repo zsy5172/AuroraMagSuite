@@ -9,7 +9,6 @@ npm run dev -- --host   # 3336 前端 + 3335 媒体代理
 ```
 
 环境变量（取自根 `.env`）：
-- `VITE_GRAPHQL_URL`：Bitmagnet GraphQL（默认 http://localhost:3333）
 - `VITE_BACKEND_URL`：FastAPI 后端（默认 http://localhost:3337）
 - `VITE_MEDIA_PROXY_URL`：媒体代理（默认 http://localhost:3335）
 

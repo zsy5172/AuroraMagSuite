@@ -49,11 +49,11 @@ function App() {
           {data && (
             <>
               <div className="mb-6 text-slate-300">
-                找到 <span className="text-purple-400 font-bold">{data.torrents.totalCount}</span> 个结果
+                找到 <span className="text-purple-400 font-bold">{data.totalCount}</span> 个结果
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {data.torrents.edges.map(({ node }) => (
+                {data.edges.map(({ node }) => (
                   <TorrentCard key={node.infoHash} torrent={node} />
                 ))}
               </div>

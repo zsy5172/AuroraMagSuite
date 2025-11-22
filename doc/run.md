@@ -4,7 +4,7 @@
 复制 `.env.example` 为 `.env` 并填写：
 - 数据库（必填）：`POSTGRES_HOST`、`POSTGRES_PORT`、`POSTGRES_USER`、`POSTGRES_PASSWORD`、`POSTGRES_DB`（Bitmagnet 用）
 - 后端可选：`BITMAGNET_URL`（默认 `http://bitmagnet:3333`）、`TMDB_API_KEY`、`PUBLIC_HOST`、`PUBLIC_PROTOCOL`
-- 前端可选：`VITE_BACKEND_URL`、`VITE_MEDIA_PROXY_URL`、`VITE_GRAPHQL_URL` 等
+- 前端可选：`VITE_BACKEND_URL`、`VITE_MEDIA_PROXY_URL`
 - Compose 默认使用容器内主机名（`backend`/`bitmagnet`），本地开发可改为 `http://localhost:3337`、`http://localhost:3333`
 
 除数据库连接外，其它值均有默认。
