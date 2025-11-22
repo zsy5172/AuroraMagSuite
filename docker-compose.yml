@@ -27,10 +27,7 @@ services:
   bitmagnet:
     image: ghcr.io/bitmagnet-io/bitmagnet:latest
     container_name: bitmagnet
-    ports:
-      - "3333:3333"
-      - "3334:3334/tcp"
-      - "3334:3334/udp"
+    network_mode: host
     restart: unless-stopped
     env_file: .env
     environment:
