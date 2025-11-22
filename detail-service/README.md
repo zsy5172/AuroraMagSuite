@@ -1,208 +1,27 @@
-# AuroraMag Detail Proxy
+# AuroraMag Detail Proxy (FastAPI)
 
-增强版 Torznab 代理，为 Prowlarr 提供富媒体元数据。
+FastAPI 实现的 Torznab/详情代理，聚合 Bitmagnet 数据并补充 TMDB/豆瓣元数据，提供 JSON、HTML 详情页与缓存接口。
 
-✨ **v1.6.1 重磅更新** - TMDB 官方预告片，秒开高清！🎬
-
-## ✨ 功能特性
-
-1. **🖼️ 图片支持** - 自动添加 TMDB 海报和背景图
-2. **📊 详细元数据** - 显示评分、演员、导演等信息
-3. **🎨 美化详情页** - 点击种子可查看精美的详情页面
-4. **📂 文件列表** - 显示种子包含的所有文件和大小
-5. **🔍 文件搜索** - 实时搜索文件名，快速定位
-6. **🎬 类型过滤** - 按视频/音频/字幕等类型快速筛选
-7. **📋 复制按钮** - 一键复制磁力链接
-8. **📊 健康度显示** - 显示大小/时间/文件数
-9. **🎬 官方预告片** - TMDB 预告片秒开播放
-10. **🖼️ 多源图片预览** - TMDB画廊/种子图片/外部链接
-11. **🎭 演员列表** - 显示主要演员头像和角色
-12. **🎨 Pantone主题** - 2024-2025年度色，温暖优雅
-13. **🔗 完全兼容** - 100% 兼容 Prowlarr Torznab 协议
-
-## 🌟 v1.2.1 新功能 - 非 TMDB 图片预览
-
-### 三种图片来源
-即使没有 TMDB 数据，也能提供图片预览！
-
-#### 1. TMDB 官方图片（优先）
-- 电影剧照和海报
-- 最多 12 张
-- 点击放大查看
-
-#### 2. 种子内图片文件（次选）
-- 自动识别种子中的图片文件
-- 显示文件路径和大小
-- 支持 .jpg, .png, .gif 等格式
-
-#### 3. 相关图片链接（兜底）
-- BTDig 种子搜索
-- IMDB 链接（如果有 IMDB ID）
-- Google 图片搜索
-
-**100% 覆盖！** 所有种子都能显示某种形式的图片预览。
-
-## 🌟 v1.2.0 新功能
-
-### 文件类型图标
-每个文件都有对应的图标，一眼识别类型：
-- 🎬 视频 | 🎵 音频 | 💬 字幕 | 🖼️ 图片 | 📄 文档 | 📦 压缩包
-
-### 文件类型统计
-卡片式展示各类型文件的数量和大小占比
-
-### TMDB 画廊
-- 最多显示 12 张剧照/海报
-- 点击放大全屏查看
-- ESC 键快速关闭
-
-### 演员列表
-- 显示主要演员头像
-- 角色名称
-- 最多 12 位演员
-
-## 🚀 快速开始
-
-### 启动服务器
+## 运行
 ```bash
-./start.sh
+./start.sh          # 以 --reload 启动 uvicorn，端口 3337
+# 或
+uvicorn app.main:app --host 0.0.0.0 --port 3337
 ```
 
-或手动启动：
+环境变量（取自根 `.env`）：
+- `BITMAGNET_URL`：Bitmagnet GraphQL/Torznab 地址，默认 `http://bitmagnet:3333`
+- `TMDB_API_KEY`：TMDB API Key（可为空）
+- `PUBLIC_HOST` / `PUBLIC_PROTOCOL`：生成详情链接时的对外地址
+- 缓存/超时参数：`TMDB_CACHE_TTL`、`GRAPHQL_CACHE_TTL`、`DETAILS_CACHE_TTL`、`DOUBAN_CACHE_TTL`、`CACHE_MAXSIZE`
+
+主要路由：
+- `/torznab/`：代理 Bitmagnet Torznab 并增加详情链接
+- `/api/details/{infoHash}`：返回 JSON 详情
+- `/details/{infoHash}`：返回 HTML 详情页
+- `/api/cache/stats` 与 `/cache/clear`：缓存状态与清理
+
+测试：
 ```bash
-npm install
-npm start
+pytest
 ```
-
-服务器将运行在: **http://localhost:3337**
-
-### 在 Prowlarr 中配置
-
-1. 打开 Prowlarr → Settings → Indexers → Add Indexer
-2. 选择 "Generic Torznab"
-3. 填写配置：
-   ```
-   Name: AuroraMag
-   URL: http://localhost:3337/torznab/
-   API Key: (留空)
-   Categories: 2000,5000 (或全选)
-   ```
-4. Test → Save
-
-## 🎯 现在 Prowlarr 中可以：
-
-✅ 搜索结果包含详情页链接  
-✅ 点击链接查看精美的种子详情页  
-✅ 显示 TMDB 海报、背景图、剧情简介  
-✅ 显示评分、上映日期等元数据  
-✅ **显示完整的文件列表（路径+大小+图标）**  
-✅ **查看文件类型分布统计**  
-✅ **浏览 TMDB 剧照画廊**  
-✅ **查看主要演员列表**  
-✅ 一键复制磁力链接  
-
-## 📂 详情页展示
-
-### 文件列表
-详情页会自动显示种子包含的文件：
-
-- 📁 文件路径（完整目录结构）
-- 🎬 文件类型图标（视频、音频、字幕等）
-- 📊 文件大小（自动格式化）
-- 🎨 美化的滚动列表界面
-- 💡 智能提示（无文件信息时）
-
-### 文件统计
-卡片式展示各类型文件：
-- 文件数量统计
-- 大小占比分析
-- 一目了然的分布情况
-
-### TMDB 内容（需要外网访问）
-- 🖼️ 剧照/海报画廊（可点击放大）
-- 🎭 主要演员列表（头像+角色）
-- ⭐ 评分、简介等元数据
-
-查看完整说明：
-- [文件列表功能](./FILE_LIST_FEATURE.md)
-- [预览功能](./PREVIEW_FEATURES.md)  
-
-## 📖 API 说明
-
-### Torznab API
-```
-GET /torznab/?t=caps         - 能力声明
-GET /torznab/?t=search&q=阿凡达  - 搜索
-GET /torznab/?t=movie-search&tmdbid=19995  - 按 TMDB ID 搜索
-```
-
-### 详情 API
-```
-GET /api/details/{infoHash}  - 返回 JSON 元数据（包含文件列表）
-GET /details/{infoHash}      - 返回美化的 HTML 页面
-```
-
-**API 返回示例**:
-```json
-{
-  "infoHash": "xxx",
-  "title": "电影名称",
-  "size": 7932785893,
-  "files": [
-    {
-      "index": 0,
-      "path": "video/movie.mkv",
-      "size": 7500000000
-    },
-    {
-      "index": 1,
-      "path": "subtitles/chinese.srt",
-      "size": 45000
-    }
-  ],
-  "hasFilesInfo": true
-}
-```
-
-## 📦 架构
-
-```
-Prowlarr / Sonarr / Radarr
-    ↓
-AuroraMag Detail Proxy :3337
-    ↓
-Bitmagnet :3333 (GraphQL + Torznab)
-    ↓
-TMDB / 豆瓣 / Fanart 等第三方 API
-```
-
-## 📄 许可证
-
-MIT
-
-## 🎬 v1.6.1 新功能 - TMDB 官方预告片
-
-**从 WebTorrent 改为官方预告片 - 秒开、高清、稳定！**
-
-### 为什么改变？
-- ❌ **WebTorrent 问题**：需要做种者、加载慢、经常失败
-- ✅ **TMDB 预告片**：官方来源、YouTube托管、秒开播放
-
-### 核心特性
-- **🎬 官方预告片** - 自动从 TMDB 获取多个预告片
-- **⚡ 秒开播放** - YouTube CDN 加速，点击即播
-- **🎨 精美展示** - 缩略图网格，悬停播放图标
-- **📺 弹窗播放** - 全屏观看，沉浸体验
-
-### 性能对比
-| 指标 | WebTorrent | TMDB 预告片 |
-|-----|-----------|------------|
-| 加载时间 | 30-120秒 | <1秒 ⚡ |
-| 成功率 | ~30% | ~95% ✅ |
-| 带宽占用 | 高 | 零 💾 |
-| 画质 | 不稳定 | 高清 🎬 |
-
-详见：[TRAILER_FEATURE.md](TRAILER_FEATURE.md)
-
----
-

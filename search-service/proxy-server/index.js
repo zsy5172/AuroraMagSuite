@@ -68,7 +68,7 @@ app.get('/proxy/image', async (req, res) => {
 });
 
 // TMDB API 代理（支持多语言）
-app.get('/api/tmdb/:type/:id', async (req, res) => {
+app.get('/media/tmdb/:type/:id', async (req, res) => {
   try {
     const { type, id } = req.params;
     const { language = 'zh-CN' } = req.query;
@@ -86,7 +86,7 @@ app.get('/api/tmdb/:type/:id', async (req, res) => {
 });
 
 // Fanart.tv API 代理（需要申请 API key）
-app.get('/api/fanart/:type/:id', async (req, res) => {
+app.get('/media/fanart/:type/:id', async (req, res) => {
   try {
     const { type, id } = req.params;
     // 需要在 https://fanart.tv/get-an-api-key/ 申请
@@ -109,7 +109,7 @@ app.get('/api/fanart/:type/:id', async (req, res) => {
 });
 
 // OMDB API 代理（IMDB 数据）
-app.get('/api/omdb/:imdbId', async (req, res) => {
+app.get('/media/omdb/:imdbId', async (req, res) => {
   try {
     const { imdbId } = req.params;
     // 在 http://www.omdbapi.com/apikey.aspx 申请免费 key
@@ -132,7 +132,7 @@ app.get('/api/omdb/:imdbId', async (req, res) => {
 });
 
 // 缓存统计
-app.get('/api/cache/stats', async (req, res) => {
+app.get('/media/cache/stats', async (req, res) => {
   try {
     const { readdir, stat } = await import('fs/promises');
     const files = await readdir(CACHE_DIR);

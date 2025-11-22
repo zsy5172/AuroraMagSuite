@@ -1,6 +1,9 @@
 import { GraphQLClient } from 'graphql-request';
 
-export const graphqlClient = new GraphQLClient('/graphql');
+const GRAPHQL_PATH = import.meta.env.VITE_GRAPHQL_PATH || '/graphql';
+const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE || '/media';
+
+export const graphqlClient = new GraphQLClient(GRAPHQL_PATH);
 
 export const searchTorrents = async (query, limit = 20) => {
   const gql = `
@@ -53,21 +56,21 @@ export const getTMDBPoster = (path, width = 300) => {
 };
 
 export const fetchTMDBDetails = async (type, id) => {
-  const response = await fetch(`/api/tmdb/${type}/${id}`);
+  const response = await fetch(`${MEDIA_BASE}/tmdb/${type}/${id}`);
   return response.json();
 };
 
 export const fetchOMDBDetails = async (imdbId) => {
-  const response = await fetch(`/api/omdb/${imdbId}`);
+  const response = await fetch(`${MEDIA_BASE}/omdb/${imdbId}`);
   return response.json();
 };
 
 export const fetchFanartImages = async (type, id) => {
-  const response = await fetch(`/api/fanart/${type}/${id}`);
+  const response = await fetch(`${MEDIA_BASE}/fanart/${type}/${id}`);
   return response.json();
 };
 
 export const getCacheStats = async () => {
-  const response = await fetch('/api/cache/stats');
+  const response = await fetch(`${MEDIA_BASE}/cache/stats`);
   return response.json();
 };

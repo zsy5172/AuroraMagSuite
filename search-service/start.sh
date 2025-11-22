@@ -7,6 +7,6 @@ npm install
 echo ""
 echo "🔥 启动开发服务器..."
 echo "   - 前端: http://localhost:3336"
-echo "   - 代理: http://localhost:3335"
+echo "   - 媒体代理: http://localhost:3335"
 echo ""
-npm run dev
+npm run dev -- --host

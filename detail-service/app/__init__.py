@@ -1,0 +1,1 @@
+# AuroraMag Detail Proxy (FastAPI)
