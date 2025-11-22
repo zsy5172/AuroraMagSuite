@@ -3,6 +3,8 @@ import { GraphQLClient } from 'graphql-request';
 const GRAPHQL_PATH = '/graphql';
 const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE || '/media';
 
+export const graphqlClient = new GraphQLClient(GRAPHQL_PATH);
+
 export const searchTorrents = async (query, limit = 20) => {
   const gql = `
     query SearchTorrents($query: String!, $limit: Int!) {
