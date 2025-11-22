@@ -7,6 +7,8 @@ services:
     ports:
       - "3337:3337"
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - bitmagnet
     restart: unless-stopped
@@ -19,6 +21,8 @@ services:
       - "3335:3335"
     env_file: .env
     command: ["npm", "run", "dev", "--", "--host"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - backend
       - bitmagnet
