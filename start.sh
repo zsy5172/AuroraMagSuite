@@ -5,6 +5,12 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 
 echo "🔥 Starting AuroraMag backend (FastAPI) and frontend (Vite dev) in debug mode..."
 
+if [ -f "$ROOT/.env" ]; then
+  set -a
+  . "$ROOT/.env"
+  set +a
+fi
+
 (
   cd "$ROOT/detail-service"
   if [ -d ".venv" ]; then
