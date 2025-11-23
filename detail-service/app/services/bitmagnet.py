@@ -58,12 +58,16 @@ async def graphql_cached(query: str, variables: dict | None = None) -> dict:
     return data
 
 
-async def proxy_graphql(payload: dict) -> dict:
+async def proxy_graphql(payload: dict) -> Response:
     """
-    Transparent GraphQL passthrough to Bitmagnet without caching.
+    Transparent GraphQL passthrough to Bitmagnet without caching or raise_for_status.
     """
-    resp = await _http_post(f"{_bitmagnet_base()}/graphql", payload)
-    return resp.json()
+    async with httpx.AsyncClient(timeout=settings.request_timeout) as client:
+        return await client.post(
+            f"{_bitmagnet_base()}/graphql",
+            json=payload,
+            headers={"Content-Type": "application/json"},
+        )
 
 
 async def fetch_tmdb_movie(tmdb_id: str, language: str = "zh-CN") -> Optional[dict]:
@@ -144,6 +148,20 @@ def _parse_item_attrs(item: dict) -> dict:
             if name:
                 attrs[name] = value
     return attrs
+
+
+def _map_basic_item(item: dict) -> dict:
+    attrs = _parse_item_attrs(item)
+    return {
+        "infoHash": _first(item.get("guid")),
+        "title": _first(item.get("title")),
+        "size": int(_first(item.get("size")) or 0),
+        "category": _first(item.get("category")) or "other",
+        "pubDate": _first(item.get("pubDate")),
+        "seeders": int(attrs.get("seeders") or 0),
+        "leechers": int(attrs.get("peers") or 0),
+        "attrs": attrs,
+    }
 
 
 async def get_torrent_details(info_hash: str) -> Optional[dict]:
@@ -280,3 +298,14 @@ def cache_stats() -> dict:
 
 def clear_cache() -> None:
     cache.clear_all()
+
+
+async def search_torrents(query: str, limit: int = 50, offset: int = 0) -> List[dict]:
+    fetch_limit = limit + offset
+    resp = await _http_get(
+        f"{_bitmagnet_base()}/torznab/",
+        params={"t": "search", "q": query, "limit": fetch_limit},
+    )
+    items = _parse_torznab_items(resp.text)
+    mapped = [_map_basic_item(item) for item in items if _first(item.get("guid"))]
+    return mapped[offset : offset + limit]

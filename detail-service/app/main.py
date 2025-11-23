@@ -75,8 +75,19 @@ async def cache_clear():
 
 @app.post("/graphql")
 async def graphql_proxy(body: dict):
-    try:
-        data = await bitmagnet.proxy_graphql(body)
-        return data
-    except HTTPStatusError as exc:
-        raise HTTPException(status_code=exc.response.status_code, detail="Bitmagnet GraphQL error") from exc
+    resp = await bitmagnet.proxy_graphql(body)
+    return Response(
+        content=resp.content,
+        status_code=resp.status_code,
+        media_type=resp.headers.get("content-type", "application/json"),
+    )
+
+
+@app.get("/api/search")
+async def search_endpoint(q: str, limit: int = 50, offset: int = 0):
+    results = await bitmagnet.search_torrents(q, limit, offset)
+    return {
+        "totalCount": len(results),
+        "edges": [{"node": r} for r in results],
+        "hasMore": len(results) == limit,
+    }

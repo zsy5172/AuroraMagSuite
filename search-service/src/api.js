@@ -1,50 +1,12 @@
-import { GraphQLClient } from 'graphql-request';
-
-const GRAPHQL_PATH = '/graphql';
 const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE || '/media';
+const BACKEND_BASE = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '');
 
-export const graphqlClient = new GraphQLClient(GRAPHQL_PATH);
-
-export const searchTorrents = async (query, limit = 20) => {
-  const gql = `
-    query SearchTorrents($query: String!, $limit: Int!) {
-      torrent {
-        torrents(
-          query: { queryString: $query }
-          limit: $limit
-        ) {
-          totalCount
-          edges {
-            node {
-              infoHash
-              name
-              size
-              filesCount
-              seeders
-              leechers
-              publishedAt
-              content {
-                type
-                title
-                releaseYear
-                collections {
-                  name
-                  type
-                }
-                attributes {
-                  key
-                  value
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
-  
-  const result = await graphqlClient.request(gql, { query, limit });
-  return result?.torrent?.torrents;
+export const searchTorrents = async (query, limit = 20, offset = 0) => {
+  const resp = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`);
+  if (!resp.ok) {
+    throw new Error('搜索请求失败');
+  }
+  return resp.json();
 };
 
 export const getImageProxy = (url, width = 300) => {
@@ -76,4 +38,9 @@ export const fetchFanartImages = async (type, id) => {
 export const getCacheStats = async () => {
   const response = await fetch(`${MEDIA_BASE}/cache/stats`);
   return response.json();
+};
+
+export const getDetailUrl = (infoHash) => {
+  const base = BACKEND_BASE || '';
+  return `${base}/details/${infoHash}`;
 };
