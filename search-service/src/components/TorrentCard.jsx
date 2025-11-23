@@ -14,7 +14,17 @@ export default function TorrentCard({ torrent }) {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('zh-CN');
+    const d = new Date(dateString);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString(undefined, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
   };
 
   // 尝试从内容属性中提取海报
@@ -43,7 +53,7 @@ export default function TorrentCard({ torrent }) {
         if (count !== null && count !== undefined) {
           setFilesCount(count);
         }
-      } catch (e) {
+      } catch {
         // ignore errors
       } finally {
         setLoadingFiles(false);
@@ -132,15 +142,15 @@ export default function TorrentCard({ torrent }) {
             <div className="flex justify-between">
               <span>文件:</span>
               <span className="text-slate-300">
-                {loadingFiles ? '...' : (filesCount ?? '—')} 个
+                {loadingFiles ? '...' : (filesCount === 100 ? '100+' : filesCount ?? '—')} 个
               </span>
             </div>
-            {(torrent.publishedAt || torrent.pubDate) && (
-              <div className="flex justify-between">
-                <span>发布:</span>
-                <span className="text-slate-300">{formatDate(torrent.publishedAt || torrent.pubDate)}</span>
-              </div>
-            )}
+          {(torrent.publishedAt || torrent.pubDate) && (
+            <div className="flex justify-between">
+              <span>索引时间:</span>
+              <span className="text-slate-300">{formatDate(torrent.publishedAt || torrent.pubDate)}</span>
+            </div>
+          )}
           </div>
 
         {/* 操作按钮 */}

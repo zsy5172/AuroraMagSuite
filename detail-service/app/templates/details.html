@@ -4,6 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ details.title }} - AuroraMag</title>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const formatter = new Intl.DateTimeFormat(undefined, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+      document.querySelectorAll('[data-ts]').forEach(el => {
+        const ts = el.getAttribute('data-ts');
+        if (!ts) return;
+        const d = new Date(ts);
+        if (isNaN(d.getTime())) return;
+        el.textContent = formatter.format(d);
+      });
+    });
+  </script>
   <style>
     :root {
       --bg: #0f172a;
@@ -52,7 +72,7 @@
           {% if details.size %}<span class="badge">大小 {{ '%.2f'|format(details.size / (1024*1024*1024)) }} GB</span>{% endif %}
         </div>
         <div class="meta">
-          {% if details.pubDate %}<div><div class="muted">发布时间</div><div>{{ details.pubDate }}</div></div>{% endif %}
+          {% if details.pubDate %}<div><div class="muted">索引时间</div><div data-ts="{{ details.pubDate }}">{{ details.pubDate }}</div></div>{% endif %}
           {% if details.attrs.seeders %}<div><div class="muted">做种</div><div>{{ details.attrs.seeders }}</div></div>{% endif %}
           {% if details.attrs.peers %}<div><div class="muted">下载</div><div>{{ details.attrs.peers }}</div></div>{% endif %}
         </div>

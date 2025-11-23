@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { searchTorrents, getTMDBPoster, getCacheStats } from './api';
+import { searchTorrents } from './api';
 import TorrentCard from './components/TorrentCard';
 import SearchBar from './components/SearchBar';
 import CacheStats from './components/CacheStats';
 
 function App() {
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
   const loaderRef = useRef(null);
   const PAGE_SIZE = 50;
@@ -41,11 +40,11 @@ function App() {
     }
   };
 
-  const handleLoadMore = () => {
-    if (hasNextPage) {
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -59,7 +58,7 @@ function App() {
       if (current) observer.unobserve(current);
       observer.disconnect();
     };
-  }, [loaderRef, hasNextPage, isFetchingNextPage]);
+  }, [loaderRef, hasNextPage, isFetchingNextPage, handleLoadMore]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
