@@ -44,3 +44,14 @@ export const getDetailUrl = (infoHash) => {
   const base = BACKEND_BASE || '';
   return `${base}/details/${infoHash}`;
 };
+
+export const fetchFileCount = async (infoHash) => {
+  // Use relative path to go through dev proxy/ same-origin to avoid CORS
+  const resp = await fetch(`/api/details/${infoHash}`);
+  if (!resp.ok) throw new Error('文件数查询失败');
+  const data = await resp.json();
+  if (Array.isArray(data?.files)) {
+    return data.files.length;
+  }
+  return null;
+};

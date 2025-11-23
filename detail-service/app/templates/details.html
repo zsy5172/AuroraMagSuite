@@ -77,7 +77,7 @@
         <div>
           <div class="section-title">文件列表</div>
           <ul class="list">
-            {% for file in details.files[:20] %}
+            {% for file in details.files %}
             <li>
               <div>{{ file.path }}</div>
               <div class="muted">{{ '%.2f'|format(file.size / (1024*1024*1024)) }} GB</div>

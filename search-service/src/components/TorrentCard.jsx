@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { getTMDBPoster, getDetailUrl } from '../api';
+import { useEffect, useState } from 'react';
+import { getTMDBPoster, getDetailUrl, fetchFileCount } from '../api';
 
 export default function TorrentCard({ torrent }) {
   const [imageError, setImageError] = useState(false);
   const content = torrent.content || {};
   const attrs = torrent.attrs || {};
+  const [filesCount, setFilesCount] = useState(torrent.filesCount || attrs.files || null);
+  const [loadingFiles, setLoadingFiles] = useState(false);
   
   const formatSize = (bytes) => {
     const gb = bytes / (1024 ** 3);
@@ -31,6 +33,24 @@ export default function TorrentCard({ torrent }) {
 
   const posterUrl = getPosterUrl();
   const isVideo = content.type === 'movie' || content.type === 'tv_show' || torrent.category === 'tv_show';
+
+  useEffect(() => {
+    const loadFiles = async () => {
+      if (filesCount !== null) return;
+      setLoadingFiles(true);
+      try {
+        const count = await fetchFileCount(torrent.infoHash);
+        if (count !== null && count !== undefined) {
+          setFilesCount(count);
+        }
+      } catch (e) {
+        // ignore errors
+      } finally {
+        setLoadingFiles(false);
+      }
+    };
+    loadFiles();
+  }, [torrent.infoHash, filesCount]);
 
   return (
     <div className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl overflow-hidden hover:border-purple-500 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 group">
@@ -111,7 +131,9 @@ export default function TorrentCard({ torrent }) {
             </div>
             <div className="flex justify-between">
               <span>文件:</span>
-              <span className="text-slate-300">{torrent.filesCount || attrs.files || '—'} 个</span>
+              <span className="text-slate-300">
+                {loadingFiles ? '...' : (filesCount ?? '—')} 个
+              </span>
             </div>
             {(torrent.publishedAt || torrent.pubDate) && (
               <div className="flex justify-between">
