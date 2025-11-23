@@ -17,6 +17,10 @@ export default defineConfig(({ mode }) => {
           target: backend,
           changeOrigin: true,
         },
+        '/details': {
+          target: backend,
+          changeOrigin: true,
+        },
         '/media': {
           target: media,
           changeOrigin: true,

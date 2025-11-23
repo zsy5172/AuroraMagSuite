@@ -1,6 +1,4 @@
 const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE || '/media';
-const BACKEND_BASE = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '');
-
 export const searchTorrents = async (query, limit = 20, offset = 0) => {
   const resp = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`);
   if (!resp.ok) {
@@ -41,8 +39,7 @@ export const getCacheStats = async () => {
 };
 
 export const getDetailUrl = (infoHash) => {
-  const base = BACKEND_BASE || '';
-  return `${base}/details/${infoHash}`;
+  return `/details/${infoHash}`;
 };
 
 export const fetchFileCount = async (infoHash) => {
