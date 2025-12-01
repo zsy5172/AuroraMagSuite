@@ -25,14 +25,14 @@ BACKEND_PID=$!
 (
   cd "$ROOT/search-service"
   npm install
-  npm run dev -- --host
+  npm run dev -- --host --port 3336
 ) &
 FRONTEND_PID=$!
 
 trap 'echo "Stopping..."; kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true' EXIT
 
 echo "✅ Backend on http://localhost:3337"
-echo "✅ Frontend on http://localhost:3336 (media proxy 3335)"
+echo "✅ Frontend on http://localhost:3336"
 echo "ℹ️ Ensure Bitmagnet is running at \$BITMAGNET_URL (${BITMAGNET_URL:-http://localhost:3333})"
 
 wait $BACKEND_PID $FRONTEND_PID

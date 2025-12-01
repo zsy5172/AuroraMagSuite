@@ -26,26 +26,27 @@
   </script>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #111827;
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-      --accent: #8b5cf6;
+      --bg: #111216;
+      --card: #1a1c21;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #f59e0b;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at 20% 20%, rgba(139,92,246,0.15), transparent 30%), radial-gradient(circle at 80% 0%, rgba(14,165,233,0.15), transparent 25%), var(--bg); color: var(--text); }
+    body { margin: 0; padding: 0; font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at 22% 18%, rgba(245,158,11,0.06), transparent 30%), radial-gradient(circle at 78% 6%, rgba(99,102,241,0.05), transparent 28%), var(--bg); color: var(--text); }
     .container { max-width: 1100px; margin: 0 auto; padding: 32px 20px 48px; }
     h1 { margin: 0 0 12px; font-size: 28px; }
     .grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; }
-    .card { background: var(--card); border: 1px solid rgba(148,163,184,0.2); border-radius: 16px; padding: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+    .card { background: var(--card); border: 1px solid rgba(148,163,184,0.18); border-radius: 14px; padding: 18px; box-shadow: 0 10px 26px rgba(0,0,0,0.22); }
     .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
-    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(139,92,246,0.15); color: #c4b5fd; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(245,158,11,0.16); color: #fbbf24; border-radius: 999px; font-size: 12px; font-weight: 600; }
     .section-title { font-size: 18px; margin: 16px 0 8px; }
     .list { margin: 0; padding: 0; list-style: none; }
     .list li { padding: 8px 0; border-bottom: 1px solid rgba(148,163,184,0.1); }
-    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px; background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: #fff; text-decoration: none; font-weight: 700; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #f97316); color: #0f172a; text-decoration: none; font-weight: 700; box-shadow: 0 8px 22px rgba(0,0,0,0.18); }
     .muted { color: var(--muted); font-size: 14px; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stat { display:flex; align-items:center; gap:8px; padding:8px 10px; background: rgba(148,163,184,0.12); border-radius:10px; }
     @media (max-width: 840px) {
       .grid { grid-template-columns: 1fr; }
     }
@@ -55,44 +56,33 @@
   <div class="container">
     <div class="grid">
       <div class="card">
-        {% if details.tmdb and details.tmdb.poster_path %}
-        <img src="https://image.tmdb.org/t/p/w500{{ details.tmdb.poster_path }}" alt="{{ details.title }}" style="width:100%; border-radius:12px; margin-bottom:12px; object-fit:cover;">
-        {% endif %}
         <a class="btn" href="{{ details.magnetUrl }}" target="_blank">🧲 磁力链接</a>
         <div style="margin-top:8px;">
           <div class="muted">InfoHash</div>
           <div style="word-break:break-all;">{{ details.infoHash }}</div>
         </div>
+        <div class="meta" style="margin-top:12px;">
+          {% if details.seeders is not none %}<div class="stat">⬆️ <div><div class="muted">做种</div><div>{{ details.seeders }}</div></div></div>{% endif %}
+          {% if details.leechers is not none %}<div class="stat">⬇️ <div><div class="muted">下载</div><div>{{ details.leechers }}</div></div></div>{% endif %}
+          {% if details.filesCount %}<div class="stat">📂 <div><div class="muted">文件数</div><div>{{ details.filesCount }}</div></div></div>{% endif %}
+        </div>
       </div>
       <div class="card">
-        <h1>{{ details.title }}</h1>
+        <h1>{{ details.title or details.name }}</h1>
         <div class="chips">
           <span class="badge">分类 {{ details.category }}</span>
-          {% if details.attrs.tmdb or details.attrs.tmdbid %}<span class="badge">TMDB {{ details.attrs.tmdb or details.attrs.tmdbid }}</span>{% endif %}
           {% if details.size %}<span class="badge">大小 {{ '%.2f'|format(details.size / (1024*1024*1024)) }} GB</span>{% endif %}
         </div>
         <div class="meta">
-          {% if details.pubDate %}<div><div class="muted">索引时间</div><div data-ts="{{ details.pubDate }}">{{ details.pubDate }}</div></div>{% endif %}
-          {% if details.attrs.seeders %}<div><div class="muted">做种</div><div>{{ details.attrs.seeders }}</div></div>{% endif %}
-          {% if details.attrs.peers %}<div><div class="muted">下载</div><div>{{ details.attrs.peers }}</div></div>{% endif %}
+          {% if details.publishedAt or details.pubDate %}<div><div class="muted">索引时间</div><div data-ts="{{ details.publishedAt or details.pubDate }}">{{ details.publishedAt or details.pubDate }}</div></div>{% endif %}
+          {% if details.seeders is not none %}<div><div class="muted">做种</div><div>{{ details.seeders }}</div></div>{% endif %}
+          {% if details.leechers is not none %}<div><div class="muted">下载</div><div>{{ details.leechers }}</div></div>{% endif %}
+          {% if details.fileStats.totalSize %}<div><div class="muted">文件总大小</div><div>{{ '%.2f'|format(details.fileStats.totalSize / (1024*1024*1024)) }} GB</div></div>{% endif %}
         </div>
-
-        {% if details.tmdb %}
         <div>
-          <div class="section-title">TMDB 元数据</div>
-          <div class="muted">评分 {{ details.tmdb.vote_average }} · 年份 {{ details.tmdb.release_date }}</div>
-          <p>{{ details.tmdb.overview }}</p>
+          <div class="section-title">磁力链接</div>
+          <div class="muted" style="word-break:break-all;">{{ details.magnetUrl }}</div>
         </div>
-        {% endif %}
-
-        {% if details.douban %}
-        <div>
-          <div class="section-title">豆瓣</div>
-          <div class="muted">评分 {{ details.douban.rating or 'N/A' }} ({{ details.douban.rating_count or 0 }}人)</div>
-          <a class="badge" href="{{ details.douban.url }}" target="_blank">打开豆瓣</a>
-        </div>
-        {% endif %}
-
         {% if details.files %}
         <div>
           <div class="section-title">文件列表</div>
@@ -101,20 +91,6 @@
             <li>
               <div>{{ file.path }}</div>
               <div class="muted">{{ '%.2f'|format(file.size / (1024*1024*1024)) }} GB</div>
-            </li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
-
-        {% if details.relatedContent %}
-        <div>
-          <div class="section-title">相关推荐</div>
-          <ul class="list">
-            {% for item in details.relatedContent %}
-            <li>
-              <div>{{ item.name }}</div>
-              <div class="muted">{{ item.qualityInfo.label }} · ↑{{ item.seeders or 0 }} / ↓{{ item.leechers or 0 }}</div>
             </li>
             {% endfor %}
           </ul>
