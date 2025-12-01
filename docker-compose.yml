@@ -18,9 +18,8 @@ services:
     container_name: auroramag-frontend
     ports:
       - "3336:3336"
-      - "3335:3335"
     env_file: .env
-    command: ["npm", "run", "dev", "--", "--host"]
+    command: ["npm", "run", "dev", "--", "--host", "--port", "3336"]
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

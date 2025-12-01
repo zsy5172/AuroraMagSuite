@@ -7,6 +7,6 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 3336 3335
+EXPOSE 3336
 
-CMD ["npm", "run", "dev", "--", "--host"]
+CMD ["npm", "run", "dev", "--", "--host", "--port", "3336"]

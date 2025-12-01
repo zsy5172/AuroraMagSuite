@@ -2,14 +2,14 @@
 
 ## Project Structure & Module Organization
 - `detail-service/`: FastAPI backend (Torznab proxy + details), tests in `detail-service/tests/`, config in `app/config.py`, templates in `app/templates/`.
-- `search-service/`: React + Vite frontend with media proxy (`proxy-server/`), UI code in `src/`.
+- `search-service/`: Vue 3 + Vite + Element Plus frontend, UI code in `src/`.
 - `doc/`: Current docs (`features.md`, `build.md`, `run.md`, `roadmap.md`); `doc/archive/` holds historical notes.
 - `docker-compose.yml`, `start.sh`: one-command local/dev orchestration; `.env.example` lists all config knobs.
 
 ## Build, Test, and Development Commands
 - Backend dev: `cd detail-service && ./start.sh` (venv + uvicorn --reload on :3337).
 - Backend tests: `cd detail-service && pytest`.
-- Frontend dev: `cd search-service && npm install && npm run dev -- --host` (Vite :3336 + media proxy :3335).
+- Frontend dev: `cd search-service && npm install && npm run dev -- --host --port 3336` (Vite :3336).
 - Frontend build: `cd search-service && npm run build && npm run preview`.
 - Full dev (front+back): `./start.sh` at repo root.
 - Docker Compose: `docker compose up --build` (includes bitmagnet; bring your own Postgres).
