@@ -3,7 +3,8 @@
 ## 环境变量
 复制 `.env.example` 为 `.env` 并填写：
 - 数据库（必填）：`POSTGRES_HOST`、`POSTGRES_PORT`、`POSTGRES_USER`、`POSTGRES_PASSWORD`、`POSTGRES_DB`（Bitmagnet 用）
-- 后端可选：`BITMAGNET_URL`（默认 `http://bitmagnet:3333`）、`TMDB_API_KEY`、`PUBLIC_HOST`、`PUBLIC_PROTOCOL`
+- 后端可选：`BITMAGNET_URL`（默认 `http://bitmagnet:3333`）、`PUBLIC_HOST`、`PUBLIC_PROTOCOL`、`REQUEST_TIMEOUT`
+- Bitmagnet 可选：`TMDB_API_KEY`（若希望 Bitmagnet 自行拉取 TMDB 数据）
 - 前端可选：`VITE_BACKEND_URL`、`VITE_MEDIA_PROXY_URL`
 - Compose 默认使用容器内主机名（`backend`/`bitmagnet`），本地开发可改为 `http://localhost:3337`、`http://localhost:3333`
 
@@ -20,7 +21,7 @@ cd detail-service
 前端：
 ```bash
 cd search-service
-./start.sh   # 安装依赖并启动 Vite(3336) + 媒体代理(3335)
+./start.sh   # 安装依赖并启动 Vite(3336)
 ```
 
 ## Docker Compose 一键启动
@@ -32,6 +33,6 @@ docker compose up --build
 包含服务：
 - `bitmagnet`：官方镜像，读取 `.env` 中的数据库连接；自带 GraphQL/Torznab 端口 3333。
 - `backend`：FastAPI 详情代理，端口 3337。
-- `frontend`：Vite 开发服务器 + 媒体代理，端口 3336（前端）/3335（图片代理）。
+- `frontend`：Vite 开发服务器，端口 3336。
 
 > 注：compose 不内置 Postgres，请确保外部数据库可达，或在部署前准备好数据库服务。

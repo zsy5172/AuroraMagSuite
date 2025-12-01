@@ -10,7 +10,7 @@ from httpx import HTTPStatusError
 from .config import settings
 from .services import bitmagnet
 
-app = FastAPI(title="AuroraMag Detail Proxy", version="2.0.0")
+app = FastAPI(title="AuroraMag Detail Proxy", version="3.0.0")
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
@@ -61,18 +61,6 @@ async def details_html(request: Request, info_hash: str):
     )
 
 
-@app.get("/cache/stats")
-@app.get("/api/cache/stats")
-async def cache_stats():
-    return bitmagnet.cache_stats()
-
-
-@app.post("/cache/clear")
-async def cache_clear():
-    bitmagnet.clear_cache()
-    return {"status": "cleared"}
-
-
 @app.post("/graphql")
 async def graphql_proxy(body: dict):
     resp = await bitmagnet.proxy_graphql(body)
@@ -84,10 +72,13 @@ async def graphql_proxy(body: dict):
 
 
 @app.get("/api/search")
-async def search_endpoint(q: str, limit: int = 50, offset: int = 0):
-    results = await bitmagnet.search_torrents(q, limit, offset)
+async def search_endpoint(q: str, limit: int = 50, offset: int = 0, sort: str | None = None, descending: bool | None = None):
+    search_result = await bitmagnet.search_torrents(q, limit, offset, sort=sort, descending=descending)
+    items = search_result.get("items", [])
+    total = search_result.get("total") or 0
+    has_next = search_result.get("hasNextPage")
     return {
-        "totalCount": len(results),
-        "edges": [{"node": r} for r in results],
-        "hasMore": len(results) == limit,
+        "totalCount": total,
+        "edges": [{"node": item} for item in items],
+        "hasMore": has_next if has_next is not None else (offset + len(items)) < total,
     }

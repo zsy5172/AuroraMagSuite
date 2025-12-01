@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import asyncio
-import json
-import re
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -10,17 +7,8 @@ import xmltodict
 from fastapi import HTTPException
 from httpx import Response
 
-from .. import cache
 from ..config import settings
-from .enrichment import (
-    analyze_files,
-    analyze_quality,
-    calculate_recommendation_score,
-    extract_image_files,
-    extract_images_from_title,
-    extract_keywords,
-    find_related_content,
-)
+from .enrichment import analyze_files
 
 
 def _bitmagnet_base() -> str:
@@ -45,20 +33,6 @@ async def fetch_torznab(params: dict) -> Response:
     return await _http_get(f"{_bitmagnet_base()}/torznab/", params=params)
 
 
-async def graphql_cached(query: str, variables: dict | None = None) -> dict:
-    variables = variables or {}
-    key = json.dumps({"query": query, "variables": variables}, sort_keys=True)
-    cached = cache.graphql_cache.get(key)
-    if cached:
-        cache.cache_hits["graphql"] += 1
-        return cached
-    cache.cache_misses["graphql"] += 1
-    resp = await _http_post(f"{_bitmagnet_base()}/graphql", {"query": query, "variables": variables})
-    data = resp.json()
-    cache.graphql_cache[key] = data
-    return data
-
-
 async def proxy_graphql(payload: dict) -> Response:
     """
     Transparent GraphQL passthrough to Bitmagnet without caching or raise_for_status.
@@ -71,87 +45,12 @@ async def proxy_graphql(payload: dict) -> Response:
         )
 
 
-async def fetch_tmdb_movie(tmdb_id: str, language: str = "zh-CN") -> Optional[dict]:
-    if not settings.tmdb_api_key:
-        return None
-    url = f"https://api.themoviedb.org/3/movie/{tmdb_id}"
-    params = {
-        "api_key": settings.tmdb_api_key,
-        "language": language,
-        "append_to_response": "credits,images,videos",
-    }
-    cache_key = json.dumps({"url": url, "params": params}, sort_keys=True)
-    cached = cache.tmdb_cache.get(cache_key)
-    if cached:
-        cache.cache_hits["tmdb"] += 1
-        return cached
-    cache.cache_misses["tmdb"] += 1
-    resp = await _http_get(url, params=params)
+async def _execute_graphql(query: str, variables: dict) -> dict:
+    resp = await _http_post(f"{_bitmagnet_base()}/graphql", {"query": query, "variables": variables})
     data = resp.json()
-    cache.tmdb_cache[cache_key] = data
+    if data.get("errors"):
+        raise HTTPException(status_code=502, detail="Bitmagnet GraphQL returned errors")
     return data
-
-
-async def fetch_tmdb_tv(tmdb_id: str, language: str = "zh-CN") -> Optional[dict]:
-    if not settings.tmdb_api_key:
-        return None
-    url = f"https://api.themoviedb.org/3/tv/{tmdb_id}"
-    params = {
-        "api_key": settings.tmdb_api_key,
-        "language": language,
-    }
-    cache_key = json.dumps({"url": url, "params": params}, sort_keys=True)
-    cached = cache.tmdb_cache.get(cache_key)
-    if cached:
-        cache.cache_hits["tmdb"] += 1
-        return cached
-    cache.cache_misses["tmdb"] += 1
-    resp = await _http_get(url, params=params)
-    data = resp.json()
-    cache.tmdb_cache[cache_key] = data
-    return data
-
-
-async def fetch_douban(title: str, year: str | None) -> Optional[dict]:
-    cache_key = f"{title}:{year}"
-    cached = cache.douban_cache.get(cache_key)
-    if cached:
-        cache.cache_hits["douban"] += 1
-        return cached
-    cache.cache_misses["douban"] += 1
-    search_params = {"q": title}
-    if year:
-        search_params["year"] = year
-    try:
-        resp = await _http_get("https://frodo.douban.com/api/v2/search/movie", params=search_params)
-        data = resp.json()
-        subjects = data.get("items") or data.get("subjects") or []
-        if not subjects:
-            return None
-        top = subjects[0]
-        detail = {
-            "title": top.get("title"),
-            "rating": top.get("rating", {}).get("value"),
-            "rating_count": top.get("rating", {}).get("count"),
-            "year": top.get("year"),
-            "url": top.get("url"),
-            "id": top.get("id"),
-        }
-        cache.douban_cache[cache_key] = detail
-        return detail
-    except Exception:
-        return None
-
-
-def _parse_torznab_items(xml_text: str) -> List[dict]:
-    parsed = xmltodict.parse(xml_text)
-    channel = parsed.get("rss", {}).get("channel", {})
-    if isinstance(channel, list):
-        channel = channel[0]
-    items = channel.get("item", [])
-    if isinstance(items, dict):
-        items = [items]
-    return items
 
 
 def _first(value: Any) -> Any:
@@ -160,142 +59,110 @@ def _first(value: Any) -> Any:
     return value
 
 
-def _parse_item_attrs(item: dict) -> dict:
-    attrs = {}
-    for attr in item.get("torznab:attr", []) or []:
-        if isinstance(attr, dict):
-            name = attr.get("@name") or attr.get("$", {}).get("name")
-            value = attr.get("@value") or attr.get("$", {}).get("value")
-            if name:
-                attrs[name] = value
-    return attrs
+def _safe_int(value: Any) -> int:
+    try:
+        return int(value)
+    except Exception:
+        return 0
 
 
-def _map_basic_item(item: dict) -> dict:
-    attrs = _parse_item_attrs(item)
-    return {
-        "infoHash": _first(item.get("guid")),
-        "title": _first(item.get("title")),
-        "size": int(_first(item.get("size")) or 0),
-        "category": _first(item.get("category")) or "other",
-        "pubDate": _first(item.get("pubDate")),
-        "seeders": int(attrs.get("seeders") or 0),
-        "leechers": int(attrs.get("peers") or 0),
-        "attrs": attrs,
+def _map_graphql_torrent(node: dict) -> dict:
+    torrent_node = node.get("torrent") or {}
+    info_hash = node.get("infoHash") or node.get("infohash") or torrent_node.get("infoHash")
+    title = node.get("title") or node.get("name") or torrent_node.get("name")
+    magnet_url = node.get("magnetUri") or torrent_node.get("magnetUri") or node.get("magnet") or node.get("magnetUrl")
+    published_at = node.get("publishedAt") or node.get("createdAt") or node.get("pubDate") or torrent_node.get("publishedAt")
+    mapped = {
+        "infoHash": info_hash,
+        "title": title,
+        "name": node.get("name") or title,
+        "size": _safe_int(node.get("size") or torrent_node.get("size")),
+        "category": node.get("category") or node.get("type") or node.get("contentType") or "other",
+        "seeders": _safe_int(node.get("seeders") or node.get("seederCount")),
+        "leechers": _safe_int(node.get("leechers") or node.get("leecherCount")),
+        "publishedAt": published_at,
+        "magnetUrl": magnet_url or (f"magnet:?xt=urn:btih:{info_hash}" if info_hash else None),
+        "attrs": {},
     }
+    if magnet_url:
+        mapped["attrs"]["magneturl"] = magnet_url
+    file_count = node.get("fileCount") or node.get("filesCount") or torrent_node.get("filesCount")
+    if file_count is not None:
+        mapped["filesCount"] = file_count
+    return mapped
+
+
+FILES_QUERY = """
+query TorrentFiles($infoHash: Hash20!, $limit: Int!, $offset: Int!) {
+  torrent {
+    files(input: { infoHashes: [$infoHash], limit: $limit, offset: $offset }) {
+      items {
+        index
+        path
+        size
+      }
+    }
+  }
+}
+"""
+
+
+async def _fetch_files(info_hash: str, batch_size: int = 200) -> List[dict]:
+    files: List[dict] = []
+    offset = 0
+    while True:
+        result = await _execute_graphql(FILES_QUERY, {"infoHash": info_hash, "limit": batch_size, "offset": offset})
+        items = result.get("data", {}).get("torrent", {}).get("files", {}).get("items", [])
+        if not items:
+            break
+        files.extend(items)
+        if len(items) < batch_size:
+            break
+        offset += batch_size
+    return files
+
+
+TORRENT_QUERY = """
+query TorrentByHash($infoHash: Hash20!) {
+  torrentContent {
+    search(input: { infoHashes: [$infoHash], limit: 1 }) {
+      items {
+        infoHash
+        title
+        seeders
+        leechers
+        publishedAt
+        contentType
+        torrent {
+          name
+          size
+          filesCount
+          magnetUri
+        }
+      }
+    }
+  }
+}
+"""
 
 
 async def get_torrent_details(info_hash: str) -> Optional[dict]:
-    cached = cache.details_cache.get(info_hash)
-    if cached:
-        cache.cache_hits["details"] += 1
-        return cached
-    cache.cache_misses["details"] += 1
     try:
-        resp = await _http_get(f"{_bitmagnet_base()}/torznab/", params={"t": "search", "q": info_hash})
-        items = _parse_torznab_items(resp.text)
+        result = await _execute_graphql(TORRENT_QUERY, {"infoHash": info_hash})
+        items = result.get("data", {}).get("torrentContent", {}).get("search", {}).get("items", [])
         if not items:
             return None
-        item = items[0]
-        attrs = _parse_item_attrs(item)
-        enclosure = _first(item.get("enclosure")) or {}
-        magnet = enclosure.get("@url") if isinstance(enclosure, dict) else None
-        category_value = _first(item.get("category")) or "other"
-        torrent_data: Dict[str, Any] = {
-            "infoHash": info_hash,
-            "title": _first(item.get("title")),
-            "size": int(_first(item.get("size")) or 0),
-            "magnetUrl": magnet,
-            "category": category_value or "other",
-            "pubDate": _first(item.get("pubDate")),
-            "attrs": attrs,
-            "files": [],
-        }
-
-        keywords = extract_keywords(torrent_data["title"] or "", torrent_data["category"])
-        if keywords:
-            related = await find_related_content(keywords, info_hash, torrent_data["category"], torrent_data["title"] or "")
-            if related:
-                torrent_data["relatedContent"] = [
-                    {**r, "qualityInfo": analyze_quality(r.get("size", 0)), "score": calculate_recommendation_score(r)}
-                    for r in related
-                ]
-
-        # Fetch files with pagination (Bitmagnet limits to 100 per request)
-        # Note: totalCount is also capped at 100, so we loop until no more items
-        try:
-            all_files = []
-            offset = 0
-            batch_size = 100
-
-            files_query = """
-            query GetFiles($infoHash: Hash20!, $limit: Int!, $offset: Int!) {
-              torrent {
-                files(input: { infoHashes: [$infoHash], limit: $limit, offset: $offset }) {
-                  items {
-                    index
-                    path
-                    size
-                  }
-                }
-              }
-            }
-            """
-
-            # Keep fetching until we get less than batch_size items
-            while True:
-                result = await graphql_cached(files_query, {"infoHash": info_hash, "limit": batch_size, "offset": offset})
-                items = result.get("data", {}).get("torrent", {}).get("files", {}).get("items", [])
-
-                if not items:
-                    break
-
-                all_files.extend(items)
-
-                # If we got less than batch_size, we've reached the end
-                if len(items) < batch_size:
-                    break
-
-                offset += batch_size
-
-            if all_files:
-                torrent_data["files"] = all_files
-                torrent_data["hasFilesInfo"] = True
-                torrent_data["fileStats"] = analyze_files(all_files)
-                torrent_data["imageFiles"] = extract_image_files(all_files)
-            else:
-                torrent_data["hasFilesInfo"] = False
-                torrent_data["imageFiles"] = []
-        except Exception:
-            torrent_data["hasFilesInfo"] = False
-            torrent_data["imageFiles"] = []
-
-        torrent_data["alternativeImages"] = extract_images_from_title(torrent_data["title"] or "", info_hash)
-
-        tmdb_id = attrs.get("tmdb") or attrs.get("tmdbid")
-        if tmdb_id and torrent_data["category"] == "movie":
-            tmdb_data = await fetch_tmdb_movie(tmdb_id, language="zh-CN") or await fetch_tmdb_movie(tmdb_id, language="en-US")
-            if tmdb_data and not tmdb_data.get("status_code"):
-                torrent_data["tmdb"] = tmdb_data
-
-        if torrent_data["category"] in {"movie", "tv"}:
-            year_match = None
-            if torrent_data.get("title"):
-                year_match = re.search(r"(19\\d{2}|20\\d{2})", torrent_data["title"])
-            year_from_tmdb = (
-                torrent_data.get("tmdb", {}).get("release_date", "")[:4]
-                if torrent_data.get("tmdb", {}).get("release_date")
-                else None
-            )
-            year_value = year_from_tmdb or (year_match.group(0) if year_match else None)
-            douban_data = await fetch_douban(torrent_data.get("title") or "", year_value)
-            if douban_data:
-                torrent_data["douban"] = douban_data
-
-        cache.details_cache[info_hash] = torrent_data
-        return torrent_data
+        base = _map_graphql_torrent(items[0])
+        base["infoHash"] = base.get("infoHash") or info_hash
+        files = await _fetch_files(info_hash)
+        base["files"] = files
+        base["hasFilesInfo"] = bool(files)
+        base["fileStats"] = analyze_files(files) if files else {"byType": {}, "totalSize": 0, "largestFile": None, "fileCount": 0}
+        return base
     except httpx.HTTPStatusError as exc:
         raise HTTPException(status_code=exc.response.status_code, detail="Upstream error") from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -333,56 +200,49 @@ def build_base_url(request_headers: dict) -> str:
     return f"{protocol}://{host}"
 
 
-def cache_stats() -> dict:
-    return cache.stats()
+SEARCH_QUERY = """
+query SearchTorrents($query: String!, $limit: Int!, $offset: Int!, $orderBy: [TorrentContentOrderByInput!]) {
+  torrentContent {
+    search(input: { queryString: $query, limit: $limit, offset: $offset, orderBy: $orderBy }) {
+      totalCount
+      totalCountIsEstimate
+      hasNextPage
+      items {
+        infoHash
+        title
+        seeders
+        leechers
+        publishedAt
+        contentType
+        torrent {
+          name
+          size
+          filesCount
+          magnetUri
+        }
+      }
+    }
+  }
+}
+"""
 
 
-def clear_cache() -> None:
-    cache.clear_all()
-
-
-async def search_torrents(query: str, limit: int = 50, offset: int = 0) -> List[dict]:
-    fetch_limit = limit + offset
-    resp = await _http_get(
-        f"{_bitmagnet_base()}/torznab/",
-        params={"t": "search", "q": query, "limit": fetch_limit},
+async def search_torrents(query: str, limit: int = 50, offset: int = 0, sort: str | None = None, descending: bool | None = None) -> Dict[str, Any]:
+    order_field = (sort or "relevance").lower()
+    allowed = {"relevance", "published_at", "updated_at", "size", "files_count", "seeders", "leechers", "name", "info_hash"}
+    if order_field not in allowed:
+        order_field = "relevance"
+    default_desc = False if order_field == "relevance" else True
+    order_by = [{"field": order_field, "descending": default_desc if descending is None else bool(descending)}]
+    result = await _execute_graphql(SEARCH_QUERY, {"query": query, "limit": limit, "offset": offset, "orderBy": order_by})
+    search_block = result.get("data", {}).get("torrentContent", {}).get("search", {}) or {}
+    items = search_block.get("items") or []
+    mapped = [_map_graphql_torrent(item) for item in items if item]
+    total = (
+        search_block.get("totalCount")
+        or search_block.get("total")
+        or search_block.get("count")
+        or len(mapped)
     )
-    items = _parse_torznab_items(resp.text)
-    mapped = [_map_basic_item(item) for item in items if _first(item.get("guid"))]
-    sliced = mapped[offset : offset + limit]
-
-    # Enrich with TMDB poster when possible (best-effort, cached)
-    async def _enrich(item: dict) -> dict:
-        tmdb_id = item.get("attrs", {}).get("tmdb") or item.get("attrs", {}).get("tmdbid")
-        if not tmdb_id:
-            return item
-        try:
-            tmdb_data = None
-            if item.get("category") == "tv_show":
-                tmdb_data = await fetch_tmdb_tv(tmdb_id, language="zh-CN") or await fetch_tmdb_tv(tmdb_id, language="en-US")
-            else:
-                tmdb_data = await fetch_tmdb_movie(tmdb_id, language="zh-CN") or await fetch_tmdb_movie(tmdb_id, language="en-US")
-            poster_path = tmdb_data.get("poster_path") if tmdb_data else None
-            backdrop_path = tmdb_data.get("backdrop_path") if tmdb_data else None
-            attrs = []
-            if poster_path:
-                attrs.append({"key": "poster_path", "value": poster_path})
-            if backdrop_path:
-                attrs.append({"key": "backdrop_path", "value": backdrop_path})
-            # Extract year from appropriate field (movies use release_date, TV shows use first_air_date)
-            release_date = tmdb_data.get("release_date") or tmdb_data.get("first_air_date") if tmdb_data else None
-            release_year = release_date[:4] if release_date and len(release_date) >= 4 else None
-
-            item["content"] = {
-                "type": item.get("category"),
-                "title": item.get("title"),
-                "releaseYear": release_year,
-                "attributes": attrs,
-            }
-        except Exception:
-            # ignore enrichment errors
-            pass
-        return item
-
-    enriched = await asyncio.gather(*[_enrich(i) for i in sliced])
-    return enriched
+    has_next = search_block.get("hasNextPage")
+    return {"items": mapped, "total": total, "hasNextPage": has_next}

@@ -1,13 +1,4 @@
-import pytest
-
-from app.services.enrichment import analyze_files, extract_keywords
-
-
-def test_extract_keywords_movie():
-    title = "Inception 2010 1080p BluRay x264"
-    keywords = extract_keywords(title, "movie")
-    assert "2010" in keywords
-    assert any("Inception" in kw for kw in keywords)
+from app.services.enrichment import analyze_files
 
 
 def test_analyze_files_groups_by_type():
